@@ -81,6 +81,15 @@ class CrystalLib::LibBodyTransformer < Crystal::Transformer
     check_pending_definitions(node)
   end
 
+  def transform(node : Crystal::CStructOrUnionDef)
+    @mapper.predefined_structs_or_unions << node
+
+    # There will be no pending definitions, since the node will
+    # be skipped and replaced with the current one when going through
+    # its usage in the header
+    node
+  end
+
   def map_type(type)
     @mapper.map(type)
   end

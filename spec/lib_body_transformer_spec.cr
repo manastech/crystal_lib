@@ -261,4 +261,18 @@ describe LibBodyTransformer do
       end
       fun some_struct_with_other_struct_pointer(handle : StructBar*)
     )
+
+    # Verify that an additional struct does not get generated
+    assert_transform "simple",
+    %(
+      struct SomeStruct1
+        x : LibC::Int
+      end
+      fun just_some_struct_1
+    ), %(
+      struct SomeStruct1
+        x : LibC::Int
+      end
+      fun just_some_struct_1 : SomeStruct1
+    )
 end

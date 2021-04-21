@@ -5,6 +5,7 @@ class CrystalLib::TypeMapper
     original_name : String
 
   getter pending_definitions
+  getter predefined_structs_or_unions
 
   @typedef_name : String?
 
@@ -12,6 +13,7 @@ class CrystalLib::TypeMapper
     @pending_definitions = [] of Crystal::ASTNode
     @pending_structs = [] of PendingStruct
     @generated = {} of UInt64 => Crystal::ASTNode
+    @predefined_structs_or_unions = [] of Crystal::CStructOrUnionDef
 
     # When completing a struct's fields we keep that struct and the field name in
     # case we find a nested struct, such as in:#
@@ -163,17 +165,24 @@ class CrystalLib::TypeMapper
     untouched_struct_name = check_anonymous_name(type.unscoped_name)
     struct_name = crystal_type_name(untouched_struct_name)
 
-    if type.fields.empty?
-      # For an empty struct we just return an alias to Void
-      struct_def = Crystal::Alias.new(path(struct_name), path(["Void"])).tap(&.doc = type.doc)
+    # Try finding a struct or union that has already been defined. If such
+    # a struct/union exist, use their definition instead and don't insert anything
+    found_predefined = @predefined_structs_or_unions.find { |predefined| predefined.name == struct_name }
+    if found_predefined
+      struct_def = found_predefined
     else
-      struct_def = Crystal::CStructOrUnionDef.new(struct_name, union: type.kind == :union).tap(&.doc = type.doc)
+      if type.fields.empty?
+        # For an empty struct we just return an alias to Void
+        struct_def = Crystal::Alias.new(path(struct_name), path(["Void"])).tap(&.doc = type.doc)
+      else
+        struct_def = Crystal::CStructOrUnionDef.new(struct_name, union: type.kind == :union).tap(&.doc = type.doc)
 
-      # Leave struct body for later, because of possible recursiveness
-      @pending_structs << PendingStruct.new(struct_def, type, untouched_struct_name)
+        # Leave struct body for later, because of possible recursiveness
+        @pending_structs << PendingStruct.new(struct_def, type, untouched_struct_name)
+      end
+
+      @pending_definitions << struct_def unless @generated.has_key?(type.object_id)
     end
-
-    @pending_definitions << struct_def unless @generated.has_key?(type.object_id)
 
     path(struct_name)
   end
