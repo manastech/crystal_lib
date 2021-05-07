@@ -287,7 +287,8 @@ class CrystalLib::Parser
          Clang::TypeKind::Float,
          Clang::TypeKind::Double,
          Clang::TypeKind::LongDouble,
-         Clang::TypeKind::WChar
+         Clang::TypeKind::WChar,
+         Clang::TypeKind::Complex
       primitive_type(type.kind)
     when Clang::TypeKind::Record,
          Clang::TypeKind::Dependent,
