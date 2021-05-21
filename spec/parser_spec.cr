@@ -162,6 +162,30 @@ describe Parser do
     fields.size.should eq(2)
   end
 
+  it "parses typedef and recursive struct" do
+    nodes = parse("typedef struct first { struct second *s; } FIRST; struct second { FIRST *f };")
+
+    struct_first = nodes[-3].as(StructOrUnion)
+    struct_first.kind.should eq(:struct)
+    struct_first.name.should eq("struct first")
+    struct_first.fields.size.should eq(1)
+    struct_first.fields.first.name.should eq("s")
+    struct_first.fields.first.type.as(PointerType).type.as(NodeRef).node.as(StructOrUnion).name.should eq("struct second")
+
+    type_first = nodes[-2].as(Typedef)
+    type_first.name.should eq("FIRST")
+    underlying_struct = type_first.type.as(NodeRef).node.as(StructOrUnion)
+    underlying_struct.kind.should eq(:struct)
+    underlying_struct.name.should eq("struct first")
+
+    struct_second = nodes[-1].as(StructOrUnion)
+    struct_second.kind.should eq(:struct)
+    struct_second.name.should eq("struct second")
+    struct_second.fields.size.should eq(1)
+    struct_second.fields.first.name.should eq("f")
+    struct_second.fields.first.type.as(PointerType).type.as(TypedefType).name.should eq("FIRST")
+  end
+
   it "parses typedef enum" do
     nodes = parse("typedef enum { x, y } point;")
     type = nodes.last.as(Typedef)
