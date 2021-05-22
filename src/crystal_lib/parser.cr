@@ -267,6 +267,8 @@ class CrystalLib::Parser
           NodeRef.new(visit_struct_or_union_declaration(definition, :struct))
         when .union_decl?
           NodeRef.new(visit_struct_or_union_declaration(definition, :union))
+        when .enum_decl?
+          NodeRef.new(visit_enum_declaration(definition))
         else
           UnexposedType.new(type.cursor.spelling)
         end

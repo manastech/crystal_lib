@@ -89,6 +89,15 @@ describe Parser do
     fields.first.type.should eq(PointerType.new(UnexposedType.new("foo")))
   end
 
+  it "parses struct with unexposed enum" do
+    nodes = parse("struct point { enum { x, y } foo;  };")
+    type = nodes.last.as(StructOrUnion)
+    fields = type.fields
+    node_ref = fields.first.type.as(NodeRef)
+    enum_def = node_ref.node.as(CrystalLib::Enum)
+    enum_def.values.size.should eq(2)
+  end
+
   it "parses recursive struct" do
     nodes = parse("struct point { struct point* x; };")
     type = nodes.last.as(StructOrUnion)
